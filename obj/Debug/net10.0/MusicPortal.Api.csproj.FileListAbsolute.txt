@@ -1,0 +1,8 @@
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.csproj.AssemblyReference.cache
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\rpswa.dswa.cache.json
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.GeneratedMSBuildEditorConfig.editorconfig
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.AssemblyInfoInputs.cache
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.AssemblyInfo.cs
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.csproj.CoreCompileInputs.cache
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.MvcApplicationPartsAssemblyInfo.cs
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.MvcApplicationPartsAssemblyInfo.cache
