@@ -1,34 +1,31 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+using MusicPortal.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Контролери
 builder.Services.AddControllers();
 
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "MusicPortal API",
-        Version = "v1"
-    });
-});
+// EF Core + SQL Server
+builder.Services.AddDbContext<MusicPortalDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
 
-// CORS
+// Swagger (мінімальна, стабільна конфігурація)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// CORS для React
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();
@@ -36,15 +33,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MusicPortal API v1");
-        c.RoutePrefix = string.Empty; // Swagger відкриється на http://localhost:5106/
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
+
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
