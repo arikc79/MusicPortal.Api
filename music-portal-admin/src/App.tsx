@@ -3,6 +3,8 @@ import { Toaster } from "react-hot-toast";
 import { UsersPage } from "./pages/UsersPage";
 import { SongsPage } from "./pages/SongsPage";
 import { GenresPage } from "./pages/GenresPage";
+import { LoginPage } from "./pages/LoginPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import {
   AppBar,
   Toolbar,
@@ -14,10 +16,8 @@ import {
 export default function App() {
   return (
     <Router>
-      {/* Глобальний Toaster */}
       <Toaster position="top-right" />
 
-      {/* Головне меню */}
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -33,16 +33,45 @@ export default function App() {
             <Button color="inherit" component={Link} to="/genres">
               Genres
             </Button>
+            <Button color="inherit" component={Link} to="/login">
+              Login
+            </Button>
           </Box>
         </Toolbar>
       </AppBar>
 
-      {/* Контент */}
       <Box sx={{ padding: 3 }}>
         <Routes>
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/songs" element={<SongsPage />} />
-          <Route path="/genres" element={<GenresPage />} />
+          {/* PUBLIC */}
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* PROTECTED */}
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/songs"
+            element={
+              <ProtectedRoute>
+                <SongsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/genres"
+            element={
+              <ProtectedRoute>
+                <GenresPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Box>
     </Router>

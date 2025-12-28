@@ -17,7 +17,6 @@ namespace MusicPortal.Api.Controllers
         private readonly MusicPortalDbContext _context;
         private readonly IConfiguration _configuration;
 
-        // DbContext + конфігурація приходять через DI
         public AuthController(
             MusicPortalDbContext context,
             IConfiguration configuration)
@@ -26,67 +25,47 @@ namespace MusicPortal.Api.Controllers
             _configuration = configuration;
         }
 
-        // POST: api/Auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // 1. Шукаємо користувача по імені
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Name == request.Name);
 
-            // 2. Якщо не знайдено — Unauthorized
-            if (user == null)
+            if (user == null || user.PasswordHash == null)
                 return Unauthorized("Invalid credentials");
 
-            // 3. Перевірка пароля (СПРОЩЕНО для ДЗ)
-            // ❗ Зараз без хешування — тільки для навчання
-            if (user.PasswordHash != request.Password)
+            if (user.PasswordHash.Trim() != request.Password.Trim())
                 return Unauthorized("Invalid credentials");
 
-            // 4. Генеруємо JWT
-            var token = GenerateJwtToken(user);
-
-            return Ok(new LoginResponse
-            {
-                Token = token
-            });
-        }
-
-        // ---------------- private ----------------
-
-        private string GenerateJwtToken(User user)
-        {
+            // 🔐 ГЕНЕРАЦІЯ JWT
             var jwtSection = _configuration.GetSection("Jwt");
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSection["Key"]!)
+            );
 
-            // Claims — дані, які зашиваємо в токен
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            // Ключ підпису
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSection["Key"]!)
-            );
-
-            var credentials = new SigningCredentials(
-                key,
-                SecurityAlgorithms.HmacSha256
-            );
-
-            // Формуємо токен
             var token = new JwtSecurityToken(
                 issuer: jwtSection["Issuer"],
                 audience: jwtSection["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse(jwtSection["ExpiresMinutes"]!)
-                ),
-                signingCredentials: credentials
+                expires: DateTime.UtcNow.AddHours(2),
+                signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // ❗ ВАЖЛИВО: ПОВЕРТАЄМО ОБʼЄКТ З token
+            return Ok(new LoginResponse
+            {
+                Token = tokenString
+            });
         }
     }
 }

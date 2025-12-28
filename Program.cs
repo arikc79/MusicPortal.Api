@@ -1,23 +1,51 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MusicPortal.Api.Data;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Контролери
+// -------------------- Controllers --------------------
 builder.Services.AddControllers();
 
-// EF Core + SQL Server
+// -------------------- EF Core --------------------
 builder.Services.AddDbContext<MusicPortalDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
 
-// Swagger (мінімальна, стабільна конфігурація)
+// -------------------- JWT Authentication  --------------------
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSection["Key"]!);
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+       
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidAudience = jwtSection["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+    });
+
+// -------------------- Swagger --------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS для React
+// -------------------- CORS --------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -30,6 +58,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// -------------------- Middleware pipeline --------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -37,9 +66,30 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseCors("AllowFrontend");
 
-app.UseAuthorization();
-app.MapControllers();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<MusicPortalDbContext>();
+
+    // якщо немає жодного користувача — створюємо admin
+    if (!context.Users.Any())
+    {
+        context.Users.Add(new MusicPortal.Api.Models.User
+        {
+            Name = "admin",
+            Email = "admin@music.com",
+            PasswordHash = "1234",
+            Role = "Admin"
+        });
+
+        context.SaveChanges();
+    }
+}
 app.Run();
