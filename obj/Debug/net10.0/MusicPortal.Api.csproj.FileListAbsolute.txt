@@ -2,7 +2,6 @@ D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\appsettings.Developmen
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\appsettings.json
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\package-lock.json
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\package.json
-D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\tsconfig.app.json
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\tsconfig.json
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\tsconfig.node.json
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\package-lock.json
@@ -176,3 +175,6 @@ D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\refint\MusicPortal.Api
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.pdb
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\MusicPortal.Api.genruntimeconfig.cache
 D:\Step\TypeScript\ДЗ\MusicPortal.Api\obj\Debug\net10.0\ref\MusicPortal.Api.dll
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\src\i18n\locales\en.json
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\src\i18n\locales\uk.json
+D:\Step\TypeScript\ДЗ\MusicPortal.Api\bin\Debug\net10.0\music-portal-admin\__tsconfig1111.app.json

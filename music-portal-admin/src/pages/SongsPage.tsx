@@ -1,208 +1,79 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "../api/axios";
+import { Button, CircularProgress, Paper } from "@mui/material";
 import { useState } from "react";
-import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Button, TextField
-} from "@mui/material";
-import toast from "react-hot-toast";
+import { SongDialog, SongForm } from "../components/songs/SongDialog";
+import { SongsTable } from "../components/songs/SongsTable";
+
+type Genre = { id: number; name: string };
 
 export function SongsPage() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<SongForm | null>(null);
 
-  const [newSongTitle, setNewSongTitle] = useState("");
-  const [newSongArtist, setNewSongArtist] = useState("");
-  const [editSongId, setEditSongId] = useState<number | null>(null);
-  const [editSongTitle, setEditSongTitle] = useState("");
-  const [editSongArtist, setEditSongArtist] = useState("");
+  const { data: genres = [] } = useQuery<Genre[]>({
+    queryKey: ["genres"],
+    queryFn: async () => (await api.get("/Genres")).data
+  });
 
-  // GET songs
-  const { data, isLoading, error } = useQuery({
+  const { data: songs = [], isLoading } = useQuery<any[]>({
     queryKey: ["songs"],
-    queryFn: async () => {
-      const res = await axios.get("http://localhost:5106/api/Songs");
-      return res.data;
-    },
+    queryFn: async () => (await api.get("/Songs")).data
   });
 
-  // POST song
-  const addSongMutation = useMutation({
-    mutationFn: async (song: { title: string; artist: string }) => {
-      await axios.post("http://localhost:5106/api/Songs", {
-        Title: song.title,
-        Artist: song.artist,
-      });
-    },
+  const save = useMutation({
+    mutationFn: (data: SongForm) =>
+      data.id
+        ? api.put(`/Songs/${data.id}`, data)
+        : api.post("/Songs", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
-      setNewSongTitle("");
-      setNewSongArtist("");
-      toast.success("Song added successfully!");
-    },
+      qc.invalidateQueries({ queryKey: ["songs"] });
+      setOpen(false);
+      setEditing(null);
+    }
   });
 
-  // PUT song
-  const updateSongMutation = useMutation({
-    mutationFn: async (song: { id: number; title: string; artist: string }) => {
-      await axios.put(`http://localhost:5106/api/Songs/${song.id}`, {
-        Id: song.id,
-        Title: song.title,
-        Artist: song.artist,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
-      setEditSongId(null);
-      setEditSongTitle("");
-      setEditSongArtist("");
-      toast.success("Song updated successfully!");
-    },
+  const del = useMutation({
+    mutationFn: (id: number) => api.delete(`/Songs/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["songs"] })
   });
 
-  // DELETE song
-  const deleteSongMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await axios.delete(`http://localhost:5106/api/Songs/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
-      toast.success("Song deleted successfully!");
-    },
-  });
-
-  if (isLoading) return <p>Loading songs...</p>;
-  if (error) return <p>Error loading songs</p>;
+  if (isLoading) return <CircularProgress />;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Songs</h2>
-
-      {/* Add song form */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (newSongTitle.trim() && newSongArtist.trim()) {
-            addSongMutation.mutate({
-              title: newSongTitle,
-              artist: newSongArtist,
-            });
-          }
-        }}
-        style={{ marginBottom: "20px" }}
+    <Paper sx={{ p: 2 }}>
+      <Button
+        variant="contained"
+        sx={{ mb: 2 }}
+        onClick={() => setOpen(true)}
+        disabled={!genres.length}
       >
-        <TextField
-          label="Song Title"
-          value={newSongTitle}
-          onChange={(e) => setNewSongTitle(e.target.value)}
-          size="small"
-          style={{ marginRight: "10px" }}
-        />
-        <TextField
-          label="Artist"
-          value={newSongArtist}
-          onChange={(e) => setNewSongArtist(e.target.value)}
-          size="small"
-          style={{ marginRight: "10px" }}
-        />
-        <Button type="submit" variant="contained" color="primary">
-          Add Song
-        </Button>
-      </form>
+        Create song
+      </Button>
 
-      {/* Songs table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Artist</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((song: any) => (
-              <TableRow key={song.id}>
-                <TableCell>{song.id}</TableCell>
-                <TableCell>
-                  {editSongId === song.id ? (
-                    <TextField
-                      value={editSongTitle}
-                      onChange={(e) => setEditSongTitle(e.target.value)}
-                      size="small"
-                    />
-                  ) : (
-                    song.title
-                  )}
-                </TableCell>
-                <TableCell>
-                  {editSongId === song.id ? (
-                    <TextField
-                      value={editSongArtist}
-                      onChange={(e) => setEditSongArtist(e.target.value)}
-                      size="small"
-                    />
-                  ) : (
-                    song.artist
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  {editSongId === song.id ? (
-                    <>
-                      <Button
-                        onClick={() =>
-                          updateSongMutation.mutate({
-                            id: song.id,
-                            title: editSongTitle,
-                            artist: editSongArtist,
-                          })
-                        }
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        style={{ marginRight: "5px" }}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        onClick={() => setEditSongId(null)}
-                        variant="outlined"
-                        color="secondary"
-                        size="small"
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={() => {
-                          setEditSongId(song.id);
-                          setEditSongTitle(song.title);
-                          setEditSongArtist(song.artist);
-                        }}
-                        variant="outlined"
-                        size="small"
-                        style={{ marginRight: "5px" }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => deleteSongMutation.mutate(song.id)}
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                      >
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </div>
+      <SongsTable
+        songs={songs.map((s) => ({
+          ...s,
+          genreName: genres.find((g) => g.id === s.genreId)?.name
+        }))}
+        onEdit={(s) => {
+          setEditing(s);
+          setOpen(true);
+        }}
+        onDelete={(id) => del.mutate(id)}
+      />
+
+      <SongDialog
+        open={open}
+        initial={editing}
+        genres={genres}
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
+        onSave={(data) => save.mutate(data)}
+      />
+    </Paper>
   );
 }

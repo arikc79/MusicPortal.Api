@@ -1,73 +1,67 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axios";
-import {
-  CircularProgress,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Paper
-} from "@mui/material";
-
-/** DTO користувача (відповідає backend) */
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-};
+import { Button, CircularProgress, Paper } from "@mui/material";
+import { useState } from "react";
+import { UserDialog, UserForm } from "../components/users/UserDialog";
+import { UsersTable } from "../components/users/UsersTable";
 
 export function UsersPage() {
-  const {
-    data: users = [], // 🔑 ГАРАНТУЄМО МАСИВ
-    isLoading,
-    isError,
-    error
-  } = useQuery<User[]>({
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<UserForm | null>(null);
+
+  const { data: users = [], isLoading } = useQuery<UserForm[]>({
     queryKey: ["users"],
-    queryFn: async () => {
-      const res = await api.get("/Users");
-      return res.data;
+    queryFn: async () => (await api.get("/Users")).data
+  });
+
+  const save = useMutation({
+    mutationFn: (data: UserForm) =>
+      data.id
+        ? api.put(`/Users/${data.id}`, data)
+        : api.post("/Users", data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      setOpen(false);
+      setEditing(null);
     }
   });
 
-  // ⏳ Завантаження
-  if (isLoading) {
-    return <CircularProgress />;
-  }
+  const del = useMutation({
+    mutationFn: (id: number) => api.delete(`/Users/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] })
+  });
 
-  // ❌ Помилка запиту
-  if (isError) {
-    return (
-      <Typography color="error">
-        Помилка завантаження користувачів
-        {error instanceof Error ? `: ${error.message}` : ""}
-      </Typography>
-    );
-  }
+  if (isLoading) return <CircularProgress />;
 
-  // 📭 Порожній список
-  if (users.length === 0) {
-    return <Typography>Користувачів поки немає</Typography>;
-  }
-
-  // ✅ Нормальний рендер
   return (
-    <Paper sx={{ padding: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Users
-      </Typography>
+    <Paper sx={{ p: 2 }}>
+      <Button
+        variant="contained"
+        sx={{ mb: 2 }}
+        onClick={() => setOpen(true)}
+      >
+        Create user
+      </Button>
 
-      <List>
-        {users.map((u) => (
-          <ListItem key={u.id} divider>
-            <ListItemText
-              primary={u.name}
-              secondary={`${u.email} — ${u.role}`}
-            />
-          </ListItem>
-        ))}
-      </List>
+      <UsersTable
+        users={users}
+        onEdit={(u) => {
+          setEditing(u);
+          setOpen(true);
+        }}
+        onDelete={(id) => del.mutate(id)}
+      />
+
+      <UserDialog
+        open={open}
+        initial={editing}
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
+        onSave={(data) => save.mutate(data)}
+      />
     </Paper>
   );
 }

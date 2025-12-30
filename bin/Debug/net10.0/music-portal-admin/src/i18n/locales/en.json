@@ -1,0 +1,20 @@
+{
+  "appTitle": "Music Portal — Admin",
+  "login": "Login",
+  "logout": "Logout",
+  "users": "Users",
+  "songs": "Songs",
+  "genres": "Genres",
+  "create": "Create",
+  "edit": "Edit",
+  "delete": "Delete",
+  "name": "Name",
+  "email": "Email",
+  "password": "Password",
+  "role": "Role",
+  "title": "Title",
+  "artist": "Artist",
+  "genre": "Genre",
+  "save": "Save",
+  "cancel": "Cancel"
+}
